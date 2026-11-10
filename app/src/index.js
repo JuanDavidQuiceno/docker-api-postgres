@@ -1,8 +1,12 @@
+const path = require('path');
 const express = require('express');
 const { pool, waitForDb } = require('./db');
 
 const app = express();
 app.use(express.json());
+
+// Front: página estática (app/public) servida por la misma API en "/"
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';

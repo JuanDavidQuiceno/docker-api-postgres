@@ -38,8 +38,10 @@ La app se conecta a la base de datos usando el **nombre del servicio** (`HOST_DB
 │   ├── Dockerfile
 │   ├── .dockerignore
 │   ├── package.json / package-lock.json
+│   ├── public/
+│   │   └── index.html                # Front: página para guardar y ver notas
 │   └── src/
-│       ├── index.js                  # Rutas /health y /notes
+│       ├── index.js                  # Rutas /health y /notes, y sirve el front
 │       └── db.js                     # Conexión a MySQL por variables de entorno
 ├── db/                               # Contenedor 2: base de datos
 │   ├── Dockerfile
@@ -111,10 +113,17 @@ npm run start:local       # o: npm run dev (se reinicia al guardar cambios)
 
 El `.env` no se sube al repositorio.
 
+## Front
+
+Abre **http://localhost:3000** en el navegador (con Docker o en local). La página muestra el estado
+de la conexión con MySQL, permite guardar notas y lista las guardadas. La sirve la misma API
+(`app/public/index.html`), por lo que no necesita un contenedor adicional.
+
 ## Endpoints de la API
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
+| `GET`  | `/` | Front (página web) |
 | `GET`  | `/health` | Estado de la API y de la conexión con `db` |
 | `POST` | `/notes`  | Guarda una nota: `{"text": "..."}` |
 | `GET`  | `/notes`  | Lista las notas guardadas |

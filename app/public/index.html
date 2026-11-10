@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notas</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --text: #1c2430;
+      --muted: #5f6b7a;
+      --border: #dde3ea;
+      --accent: #1f6feb;
+      --accent-text: #ffffff;
+      --ok: #1a7f37;
+      --error: #cf222e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f141a;
+        --surface: #182029;
+        --text: #e6edf3;
+        --muted: #9aa7b5;
+        --border: #2b3642;
+        --accent: #4493f8;
+        --accent-text: #0f141a;
+        --ok: #3fb950;
+        --error: #f85149;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
+    header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+    h1 { margin: 0; font-size: 1.6rem; }
+    .status {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px;
+      background: var(--surface); color: var(--muted); font-size: 0.85rem;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+    .status.ok .dot { background: var(--ok); }
+    .status.error .dot { background: var(--error); }
+    .subtitle { margin: 8px 0 24px; color: var(--muted); }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
+    }
+    form { display: flex; gap: 8px; }
+    input[type="text"] {
+      flex: 1; min-width: 0; padding: 10px 12px; font: inherit; color: var(--text);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    }
+    input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    button {
+      padding: 10px 16px; font: inherit; font-weight: 600; cursor: pointer;
+      color: var(--accent-text); background: var(--accent); border: 0; border-radius: 8px;
+    }
+    button:disabled { opacity: 0.6; cursor: default; }
+    .message { min-height: 1.5em; margin: 8px 0 0; font-size: 0.9rem; color: var(--error); }
+    h2 { font-size: 1.1rem; margin: 28px 0 12px; display: flex; justify-content: space-between; align-items: baseline; }
+    h2 span { font-size: 0.85rem; font-weight: 400; color: var(--muted); }
+    ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    li { display: flex; gap: 12px; align-items: baseline; }
+    li .id { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 2.5em; }
+    li .text { flex: 1; overflow-wrap: anywhere; }
+    li time { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+    .empty { color: var(--muted); text-align: center; padding: 16px; }
+    @media (max-width: 480px) {
+      form { flex-direction: column; }
+      li { flex-wrap: wrap; }
+      li time { width: 100%; padding-left: calc(2.5em + 12px); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Notas</h1>
+      <div class="status" id="status"><span class="dot"></span><span id="status-text">Comprobando conexión…</span></div>
+    </header>
+    <p class="subtitle">Las notas se guardan en MySQL a través de la API.</p>
+
+    <section class="card">
+      <form id="form">
+        <input type="text" id="text" name="text" placeholder="Escribe una nota…" maxlength="500" required autocomplete="off">
+        <button type="submit" id="submit">Guardar</button>
+      </form>
+      <p class="message" id="message" role="status"></p>
+    </section>
+
+    <h2>Notas guardadas <span id="count"></span></h2>
+    <section class="card">
+      <ul id="list"><li class="empty">Cargando…</li></ul>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const dateFmt = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+
+    async function loadHealth() {
+      const box = $('status');
+      try {
+        const res = await fetch('/health');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Sin conexión');
+        box.className = 'status ok';
+        $('status-text').textContent = `MySQL ${data.db_version} en ${data.db_host}`;
+      } catch (err) {
+        box.className = 'status error';
+        $('status-text').textContent = 'Sin conexión con la base de datos';
+      }
+    }
+
+    function renderNotes(notes) {
+      const list = $('list');
+      list.replaceChildren();
+      $('count').textContent = notes.length ? `${notes.length} en total` : '';
+      if (!notes.length) {
+        const li = document.createElement('li');
+        li.className = 'empty';
+        li.textContent = 'Todavía no hay notas.';
+        list.append(li);
+        return;
+      }
+      for (const note of [...notes].reverse()) {
+        const li = document.createElement('li');
+        const id = document.createElement('span');
+        id.className = 'id';
+        id.textContent = `#${note.id}`;
+        const text = document.createElement('span');
+        text.className = 'text';
+        text.textContent = note.text;
+        const time = document.createElement('time');
+        time.dateTime = note.created_at;
+        time.textContent = dateFmt.format(new Date(note.created_at));
+        li.append(id, text, time);
+        list.append(li);
+      }
+    }
+
+    async function loadNotes() {
+      try {
+        const res = await fetch('/notes');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al leer las notas');
+        renderNotes(data);
+      } catch (err) {
+        $('list').innerHTML = '';
+        const li = document.createElement('li');
+        li.className = 'empty';
+        li.textContent = `No se pudieron cargar las notas: ${err.message}`;
+        $('list').append(li);
+      }
+    }
+
+    $('form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = $('text');
+      const text = input.value.trim();
+      if (!text) return;
+      $('submit').disabled = true;
+      $('message').textContent = '';
+      try {
+        const res = await fetch('/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
+        input.value = '';
+        await loadNotes();
+      } catch (err) {
+        $('message').textContent = err.message;
+      } finally {
+        $('submit').disabled = false;
+        input.focus();
+      }
+    });
+
+    loadHealth();
+    loadNotes();
+  </script>
+</body>
+</html>

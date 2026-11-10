@@ -12,6 +12,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 # Copiar el código fuente
 COPY src ./src
+COPY public ./public
 
 ENV NODE_ENV=production \
     PORT=3000
