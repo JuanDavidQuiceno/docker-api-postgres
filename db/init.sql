@@ -1,5 +1,5 @@
 -- Se ejecuta automaticamente la primera vez que se crea el volumen de datos,
--- sobre la base indicada en MYSQL_DATABASE.
+-- sobre la base indicada en MYSQL_DATABASE (variable DB del .env).
 CREATE TABLE IF NOT EXISTS notes (
     id         INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
     text       TEXT         NOT NULL,

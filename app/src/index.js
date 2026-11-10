@@ -4,7 +4,8 @@ const { pool, waitForDb } = require('./db');
 const app = express();
 app.use(express.json());
 
-const PORT = Number(process.env.APP_PORT || 3000);
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Estado de la app y de la conexión con el contenedor de base de datos
 app.get('/health', async (_req, res) => {
@@ -12,7 +13,7 @@ app.get('/health', async (_req, res) => {
     const [rows] = await pool.query('SELECT NOW() AS now, VERSION() AS version');
     res.json({
       status: 'ok',
-      db_host: process.env.DB_HOST,
+      db_host: process.env.HOST_DB || '127.0.0.1',
       db_version: rows[0].version,
       db_time: rows[0].now,
     });
@@ -51,7 +52,7 @@ app.get('/notes', async (_req, res) => {
 
 waitForDb()
   .then(() => {
-    app.listen(PORT, () => console.log(`API escuchando en el puerto ${PORT}`));
+    app.listen(PORT, HOST, () => console.log(`API escuchando en ${HOST}:${PORT}`));
   })
   .catch((err) => {
     console.error(err.message);

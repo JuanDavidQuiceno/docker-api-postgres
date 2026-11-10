@@ -27,7 +27,7 @@ Proyecto de la Entrega 1 (Escenario 3) de Integración Continua: dos contenedore
                                                volumen: notes_db_data
 ```
 
-La app se conecta a la base de datos usando el **nombre del servicio** (`DB_HOST=db`), que Docker resuelve con su DNS interno. No se usa `localhost` ni una IP fija.
+La app se conecta a la base de datos usando el **nombre del servicio** (`HOST_DB=db`), que Docker resuelve con su DNS interno. No se usa `localhost` ni una IP fija.
 
 ## Estructura
 
@@ -38,7 +38,6 @@ La app se conecta a la base de datos usando el **nombre del servicio** (`DB_HOST
 │   ├── Dockerfile
 │   ├── .dockerignore
 │   ├── package.json / package-lock.json
-│   ├── .env.example                  # Variables para correr la API en local sin Docker
 │   └── src/
 │       ├── index.js                  # Rutas /health y /notes
 │       └── db.js                     # Conexión a MySQL por variables de entorno
@@ -83,11 +82,15 @@ docker compose down -v     # borra también el volumen
 
 La conexión a la base de datos se configura con variables de entorno:
 
-| Variable | Docker (`docker-compose.yml`) | Local (`app/.env`) |
+| Variable | Docker (`docker-compose.yml`) | Local (`npm run start:local`) |
 |----------|-------------------------------|--------------------|
-| `DB_HOST` | `db` (nombre del servicio, fijo) | `127.0.0.1` u otro host |
-| `DB_PORT` | `3306` | `3306` |
-| `DB_USER` / `DB_PASSWORD` / `DB_NAME` | desde el `.env` de la raíz | los de tu MySQL local |
+| `HOST_DB` | `db` (nombre del servicio, fijo en el compose) | el valor del `.env` (`127.0.0.1` por defecto) |
+| `PORT_DB` | `3306` (fijo en el compose) | el valor del `.env` |
+| `DB` / `USER_DB` / `PASS_DB` | del `.env` | del `.env` |
+| `PORT` / `HOST` | puerto y host de la API | puerto y host de la API |
+
+Docker y la ejecución local usan el **mismo `.env` de la raíz**; dentro de Docker el compose
+sobrescribe `HOST_DB` y `PORT_DB` para que la app use el contenedor `db`.
 
 Necesitas Node.js 22 y un MySQL al que puedas conectarte. Por ejemplo, con Homebrew:
 
@@ -100,13 +103,13 @@ mysql -u root notes_db < db/init.sql
 Luego:
 
 ```bash
+cp .env.example .env      # en la raíz: ajusta HOST_DB, PORT_DB, DB, USER_DB, PASS_DB
 cd app
-cp .env.example .env      # ajusta DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 npm install
 npm run start:local       # o: npm run dev (se reinicia al guardar cambios)
 ```
 
-`app/.env` tampoco se sube al repositorio.
+El `.env` no se sube al repositorio.
 
 ## Endpoints de la API
 

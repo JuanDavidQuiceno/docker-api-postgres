@@ -8,9 +8,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${DB}
+      MYSQL_USER: ${USER_DB}
+      MYSQL_PASSWORD: ${PASS_DB}
     volumes:
       - db_data:/var/lib/mysql
     networks:
@@ -30,14 +30,15 @@ services:
     container_name: notes-app
     restart: unless-stopped
     environment:
-      APP_PORT: ${APP_PORT}
-      DB_HOST: db            # nombre del servicio en la red de Docker
-      DB_PORT: 3306
-      DB_USER: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
-      DB_NAME: ${MYSQL_DATABASE}
+      PORT: ${PORT}
+      HOST: "0.0.0.0"
+      HOST_DB: db            # nombre del servicio en la red de Docker
+      PORT_DB: "3306"
+      DB: ${DB}
+      USER_DB: ${USER_DB}
+      PASS_DB: ${PASS_DB}
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "${PORT}:${PORT}"
     depends_on:
       db:
         condition: service_healthy

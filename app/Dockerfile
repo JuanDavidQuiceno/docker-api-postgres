@@ -14,7 +14,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY src ./src
 
 ENV NODE_ENV=production \
-    APP_PORT=3000
+    PORT=3000
 
 # Ejecutar como usuario sin privilegios (incluido en la imagen oficial)
 USER node

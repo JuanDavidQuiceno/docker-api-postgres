@@ -5,7 +5,8 @@ FROM mysql:8.4.3
 COPY init.sql /docker-entrypoint-initdb.d/01-init.sql
 
 # Las credenciales (MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD)
-# se inyectan como variables de entorno desde docker-compose / .env, nunca en la imagen.
+# se inyectan como variables de entorno desde docker-compose (a partir de DB, USER_DB y
+# PASS_DB del .env), nunca en la imagen.
 
 # Los datos se guardan en este directorio, que se monta como volumen
 VOLUME ["/var/lib/mysql"]
