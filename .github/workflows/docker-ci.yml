@@ -19,7 +19,8 @@ jobs:
       - name: Crear .env para CI (contraseña aleatoria, no se guarda en el repo)
         run: |
           cp .env.example .env
-          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 16)/" .env
+          sed -i "s/^MYSQL_ROOT_PASSWORD=.*/MYSQL_ROOT_PASSWORD=$(openssl rand -hex 16)/" .env
+          sed -i "s/^MYSQL_PASSWORD=.*/MYSQL_PASSWORD=$(openssl rand -hex 16)/" .env
 
       - name: Validar docker-compose.yml
         run: docker compose config --quiet
@@ -31,7 +32,7 @@ jobs:
         run: docker build -t notes-db:ci ./db
 
       - name: Levantar los contenedores
-        run: docker compose up --build -d --wait
+        run: docker compose up --build -d --wait --wait-timeout 180
 
       - name: Estado de los contenedores
         run: docker ps

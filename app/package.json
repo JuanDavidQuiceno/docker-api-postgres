@@ -1,14 +1,14 @@
 {
   "name": "notes-api",
   "version": "1.0.0",
-  "description": "API REST que guarda y lee notas en PostgreSQL",
+  "description": "API REST que guarda y lee notas en MySQL",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js"
   },
   "dependencies": {
     "express": "4.21.1",
-    "pg": "8.13.1"
+    "mysql2": "3.11.5"
   },
   "license": "MIT"
 }

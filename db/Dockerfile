@@ -1,13 +1,13 @@
-# Imagen base oficial de PostgreSQL con versión fija (no "latest")
-FROM postgres:16.4-alpine
+# Imagen base oficial de MySQL con versión fija (no "latest")
+FROM mysql:8.4.3
 
-# Scripts de inicialización: PostgreSQL los ejecuta al crear la base por primera vez
+# Scripts de inicialización: MySQL los ejecuta al crear la base por primera vez
 COPY init.sql /docker-entrypoint-initdb.d/01-init.sql
 
-# Las credenciales (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB) se inyectan
-# como variables de entorno desde docker-compose / .env, nunca en la imagen.
+# Las credenciales (MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD)
+# se inyectan como variables de entorno desde docker-compose / .env, nunca en la imagen.
 
 # Los datos se guardan en este directorio, que se monta como volumen
-VOLUME ["/var/lib/postgresql/data"]
+VOLUME ["/var/lib/mysql"]
 
-EXPOSE 5432
+EXPOSE 3306

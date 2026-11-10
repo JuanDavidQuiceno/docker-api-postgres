@@ -7,7 +7,7 @@ Proyecto de la Entrega 1 (Escenario 3) de Integración Continua: dos contenedore
 | Servicio | Rol | Imagen base | Puerto |
 |----------|-----|-------------|--------|
 | `app` | API REST (Node.js + Express) | `node:22.11-alpine` | `3000` (publicado) |
-| `db`  | Base de datos PostgreSQL con volumen | `postgres:16.4-alpine` | `5432` (solo red interna) |
+| `db`  | Base de datos MySQL con volumen | `mysql:8.4.3` | `3306` (solo red interna) |
 
 ## Arquitectura
 
@@ -17,9 +17,9 @@ Proyecto de la Entrega 1 (Escenario 3) de Integración Continua: dos contenedore
                 ▼
 ┌──────────────────── red Docker: notes_net (bridge) ────────────────────┐
 │                                                                         │
-│   ┌──────────────────────┐   host "db":5432   ┌──────────────────────┐ │
+│   ┌──────────────────────┐   host "db":3306   ┌──────────────────────┐ │
 │   │ app (notes-app)      │ ─────────────────▶ │ db (notes-db)        │ │
-│   │ Node.js 22 + Express │ ◀───────────────── │ PostgreSQL 16        │ │
+│   │ Node.js 22 + Express │ ◀───────────────── │ MySQL 8.4            │ │
 │   └──────────────────────┘     resultados     └──────────┬───────────┘ │
 │                                                          │             │
 └──────────────────────────────────────────────────────────┼─────────────┘
@@ -40,7 +40,7 @@ La app se conecta a la base de datos usando el **nombre del servicio** (`DB_HOST
 │   ├── package.json / package-lock.json
 │   └── src/
 │       ├── index.js                  # Rutas /health y /notes
-│       └── db.js                     # Conexión a PostgreSQL por variables de entorno
+│       └── db.js                     # Conexión a MySQL por variables de entorno
 ├── db/                               # Contenedor 2: base de datos
 │   ├── Dockerfile
 │   ├── .dockerignore
@@ -89,7 +89,7 @@ docker compose down -v     # borra también el volumen
 ## Prueba de comunicación (ida y vuelta)
 
 ```bash
-# Estado: muestra db_host = "db" y la hora devuelta por PostgreSQL
+# Estado: muestra db_host = "db", la versión y la hora devueltas por MySQL
 curl http://localhost:3000/health
 
 # Ida: guardar un dato en la base de datos a través de la API
@@ -104,7 +104,7 @@ curl http://localhost:3000/notes
 Verificar el dato directamente dentro del contenedor de base de datos:
 
 ```bash
-docker exec -it notes-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT * FROM notes;"'
+docker exec -it notes-db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT * FROM notes;"'
 ```
 
 Comprobar que la app resuelve el nombre del servicio `db` dentro de la red:
@@ -122,7 +122,7 @@ docker compose up --build                    # Levantar los servicios
 docker ps                                    # Contenedores en ejecución
 docker network inspect notes_net             # Red y contenedores conectados
 docker volume inspect notes_db_data          # Volumen de datos
-docker compose logs app                      # Log: "Conectado a PostgreSQL en db:5432"
+docker compose logs app                      # Log: "Conectado a MySQL en db:3306"
 ```
 
 ## Buenas prácticas y seguridad
@@ -133,7 +133,7 @@ docker compose logs app                      # Log: "Conectado a PostgreSQL en d
 - Ningún secreto en el código: la app lee la conexión desde variables de entorno.
 - La app corre con el usuario sin privilegios `node`.
 - La base de datos no publica puertos al host: solo es accesible dentro de la red `notes_net`.
-- `depends_on` con `healthcheck` (`pg_isready`) para que la app arranque cuando la base esté lista.
+- `depends_on` con `healthcheck` (`mysqladmin ping`) para que la app arranque cuando la base esté lista.
 
 ## Integración continua
 

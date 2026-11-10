@@ -1,20 +1,22 @@
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
 
 // La conexión se configura solo con variables de entorno (sin secretos en el código).
 // DB_HOST debe ser el NOMBRE DEL SERVICIO en docker-compose ("db"), no localhost ni una IP.
-const pool = new Pool({
+const pool = mysql.createPool({
   host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT || 5432),
+  port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
 });
 
-async function waitForDb(retries = 10, delayMs = 3000) {
+async function waitForDb(retries = 15, delayMs = 3000) {
   for (let i = 1; i <= retries; i++) {
     try {
       await pool.query('SELECT 1');
-      console.log(`Conectado a PostgreSQL en ${process.env.DB_HOST}:${process.env.DB_PORT || 5432}`);
+      console.log(`Conectado a MySQL en ${process.env.DB_HOST}:${process.env.DB_PORT || 3306}`);
       return;
     } catch (err) {
       console.log(`Esperando la base de datos (intento ${i}/${retries}): ${err.message}`);
