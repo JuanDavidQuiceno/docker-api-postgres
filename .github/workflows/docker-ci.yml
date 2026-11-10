@@ -1,0 +1,57 @@
+name: Docker CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test:
+    name: Construir imágenes y probar comunicación
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Crear .env para CI (contraseña aleatoria, no se guarda en el repo)
+        run: |
+          cp .env.example .env
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 16)/" .env
+
+      - name: Validar docker-compose.yml
+        run: docker compose config --quiet
+
+      - name: Construir imagen de la app
+        run: docker build -t notes-app:ci ./app
+
+      - name: Construir imagen de la base de datos
+        run: docker build -t notes-db:ci ./db
+
+      - name: Levantar los contenedores
+        run: docker compose up --build -d --wait
+
+      - name: Estado de los contenedores
+        run: docker ps
+
+      - name: Prueba de ida y vuelta (guardar y leer un dato)
+        run: |
+          curl -fsS --retry 10 --retry-connrefused --retry-delay 3 http://localhost:3000/health
+          echo
+          curl -fsS -X POST http://localhost:3000/notes \
+            -H "Content-Type: application/json" \
+            -d '{"text":"nota desde GitHub Actions"}'
+          echo
+          curl -fsS http://localhost:3000/notes | tee notes.json
+          echo
+          grep -q "nota desde GitHub Actions" notes.json
+
+      - name: Logs de los contenedores (si algo falla)
+        if: failure()
+        run: docker compose logs
+
+      - name: Apagar los contenedores
+        if: always()
+        run: docker compose down -v
