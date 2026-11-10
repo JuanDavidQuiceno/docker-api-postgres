@@ -38,6 +38,7 @@ La app se conecta a la base de datos usando el **nombre del servicio** (`DB_HOST
 │   ├── Dockerfile
 │   ├── .dockerignore
 │   ├── package.json / package-lock.json
+│   ├── .env.example                  # Variables para correr la API en local sin Docker
 │   └── src/
 │       ├── index.js                  # Rutas /health y /notes
 │       └── db.js                     # Conexión a MySQL por variables de entorno
@@ -77,6 +78,35 @@ Para apagar todo:
 docker compose down        # conserva los datos del volumen
 docker compose down -v     # borra también el volumen
 ```
+
+## Ejecutar la API en local (sin Docker)
+
+La conexión a la base de datos se configura con variables de entorno:
+
+| Variable | Docker (`docker-compose.yml`) | Local (`app/.env`) |
+|----------|-------------------------------|--------------------|
+| `DB_HOST` | `db` (nombre del servicio, fijo) | `127.0.0.1` u otro host |
+| `DB_PORT` | `3306` | `3306` |
+| `DB_USER` / `DB_PASSWORD` / `DB_NAME` | desde el `.env` de la raíz | los de tu MySQL local |
+
+Necesitas Node.js 22 y un MySQL al que puedas conectarte. Por ejemplo, con Homebrew:
+
+```bash
+brew install mysql && brew services start mysql
+mysql -u root -e "CREATE DATABASE notes_db; CREATE USER 'notes_user'@'localhost' IDENTIFIED BY 'tu_clave'; GRANT ALL ON notes_db.* TO 'notes_user'@'localhost';"
+mysql -u root notes_db < db/init.sql
+```
+
+Luego:
+
+```bash
+cd app
+cp .env.example .env      # ajusta DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
+npm install
+npm run start:local       # o: npm run dev (se reinicia al guardar cambios)
+```
+
+`app/.env` tampoco se sube al repositorio.
 
 ## Endpoints de la API
 

@@ -1,9 +1,10 @@
 const mysql = require('mysql2/promise');
 
 // La conexión se configura solo con variables de entorno (sin secretos en el código).
-// DB_HOST debe ser el NOMBRE DEL SERVICIO en docker-compose ("db"), no localhost ni una IP.
+// - En Docker, docker-compose fija DB_HOST=db (el NOMBRE DEL SERVICIO en la red de Docker).
+// - En local (npm run start:local), se toman de app/.env; si DB_HOST no está, usa 127.0.0.1.
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
+  host: process.env.DB_HOST || '127.0.0.1',
   port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
