@@ -1,0 +1,11 @@
+# Variables de entorno (secretos)
+.env
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Sistema / editores
+.DS_Store
+.vscode/
+.idea/
